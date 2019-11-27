@@ -263,7 +263,7 @@ define([
             data = data.toObject();
 
             if (type === 'billing' && this.shippingAsBilling) {
-                this.syncAddressField(this.shippingAddressContainer, field.name, field.value);
+                this.syncAddressField(this.shippingAddressContainer, field.name, field);
                 resetShipping = true;
             }
 
@@ -316,7 +316,11 @@ define([
 
             $(container).select('[name="' + syncName + '"]').each(function (element) {
                 if (~['input', 'textarea', 'select'].indexOf(element.tagName.toLowerCase())) {
-                    element.value = fieldValue;
+                    if (element.type === "checkbox") {
+                        element.checked = fieldValue.checked;
+                    } else {
+                        element.value = fieldValue.value;
+                    }
                 }
             });
         },
@@ -441,8 +445,8 @@ define([
          */
         loadShippingRates: function () {
             var addressContainer = this.shippingAsBilling ?
-                    'billingAddressContainer' :
-                    'shippingAddressContainer',
+                'billingAddressContainer' :
+                'shippingAddressContainer',
                 data = this.serializeData(this[addressContainer]).toObject();
 
             data['collect_shipping_rates'] = 1;
@@ -569,6 +573,9 @@ define([
         applyCoupon : function(code){
             this.loadArea(['items', 'shipping_method', 'totals', 'billing_method'], true, {'order[coupon][code]':code, reset_shipping: 0});
             this.orderItemChanged = false;
+            jQuery('html, body').animate({
+                scrollTop: 0
+            });
         },
 
         addProduct : function(id){
@@ -786,6 +793,20 @@ define([
                 this.gridProducts.unset(element.value);
             }
             grid.reloadParams = {'products[]':this.gridProducts.keys()};
+        },
+
+        productGridFilterKeyPress: function (grid, event) {
+            var returnKey = parseInt(Event.KEY_RETURN || 13, 10);
+
+            if (event.keyCode === returnKey) {
+                if (typeof event.stopPropagation === 'function') {
+                    event.stopPropagation();
+                }
+
+                if (typeof event.preventDefault === 'function') {
+                    event.preventDefault();
+                }
+            }
         },
 
         /**
